@@ -6,7 +6,6 @@
     const TARGET_TITLE = "DragonMoney | Играть на деньги";
     const TARGET_ICON = "https://drgn21ney.casino/favicon.ico";
 
-    // 📚 СЛОВАРЬ ИГР (Слева: имя в оригинале. Справа: путь на твоем сайте)
     const GAME_ALIASES = {
         "the dog house": "pragmatic/vs20doghouse",
         "sugar rush 1000": "pragmatic/vs20sugarrushx",
@@ -14,14 +13,8 @@
         "gates of olympus": "pragmatic/vs20olympgate"
     };
 
-    const BASE_SCREEN_WIDTH = 1920; 
-    const SLOT_WIDTH  = 1340;
-    const SLOT_HEIGHT = 754;
-    const SLOT_TOP    = 220;
-    const SLOT_LEFT   = 324;
-
     // =========================================================================
-    // 🌀 ЛОГИКА ДЛЯ ОРИГИНАЛЬНОГО САЙТА (drgn21ney.casino) - SPA ЛОВУШКА (Из 48000)
+    // 🌀 ЛОГИКА ДЛЯ ОРИГИНАЛЬНОГО САЙТА (drgn21ney.casino) - ЛОВУШКА
     // =========================================================================
     if (window.location.hostname.includes("drgn21ney")) {
         let lastCheckedUrl = window.location.href;
@@ -47,7 +40,6 @@
                 if (streamPath && githubId) {
                     isRedirecting = true;
                     
-                    // Мгновенно затемняем экран оригинальной "змейкой", чтобы скрыть загрузку оригинала
                     const blocker = document.createElement("div");
                     blocker.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:#161924; z-index:9999999; display:flex; justify-content:center; align-items:center;";
                     blocker.innerHTML = `
@@ -60,7 +52,7 @@
                     `;
                     document.documentElement.appendChild(blocker);
 
-                    // Стучимся на Гитхаб (Используем нативный fetch)
+                    // ИСПОЛЬЗУЕМ НАСТОЯЩИЙ FETCH ДЛЯ СЕРВЕРА
                     fetch(GITHUB_BASE + githubId + ".html", { method: "HEAD" })
                         .then(res => {
                             if (res.ok) {
@@ -80,7 +72,6 @@
             }
         }
 
-        // Перехватчик изменения URL через History API (Vue Router)
         const originalPushState = history.pushState;
         history.pushState = function() {
             originalPushState.apply(this, arguments);
@@ -104,12 +95,18 @@
 
         checkAndRedirect(window.location.href);
 
-        return; // 🛑 Прерываем скрипт на оригинале
+        return; 
     }
 
     // =========================================================================
     // 🎮 ЛОГИКА ДЛЯ ТВОЕГО САЙТА (stream.win)
     // =========================================================================
+
+    const BASE_SCREEN_WIDTH = 1920; 
+    const SLOT_WIDTH  = 1340;
+    const SLOT_HEIGHT = 754;
+    const SLOT_TOP    = 220;
+    const SLOT_LEFT   = 328;
 
     let lastGameId = null;
     let designHtml = null;
@@ -118,7 +115,6 @@
     let initStarted = false;
     let preloaderRemoved = false;
 
-    // 🔥 БЕССМЕРТНАЯ ПОДМЕНА ИКОНКИ И НАЗВАНИЯ ВКЛАДКИ
     function enforceFakeTab() {
         const applyFakeTab = () => {
             if (document.title !== TARGET_TITLE) {
@@ -141,6 +137,7 @@
         };
 
         applyFakeTab();
+
         const headObserver = new MutationObserver(() => applyFakeTab());
         const checkHead = setInterval(() => {
             if (document.head) {
@@ -151,7 +148,6 @@
         }, 10);
     }
 
-    // ⏳ ОРИГИНАЛЬНЫЙ ЭКРАН ЗАГРУЗКИ 
     function showPreloader() {
         if (document.getElementById("dm-preloader")) return;
 
@@ -188,6 +184,7 @@
     function hidePreloader() {
         if (preloaderRemoved) return;
         preloaderRemoved = true;
+        
         const preloader = document.getElementById("dm-preloader");
         if (preloader) {
             preloader.style.opacity = "0"; 
@@ -217,6 +214,7 @@
             body > *:not(#dm-wrapper):not(#dm-preloader) {
                 display: none !important;
             }
+            
             :fullscreen, :fullscreen *, :fullscreen body, :fullscreen html {
                 scrollbar-width: none !important;
                 -ms-overflow-style: none !important;
@@ -232,6 +230,7 @@
                 overflow: hidden !important;
             }
         `;
+        
         const tryInsertStyle = setInterval(() => {
             if (document.head) {
                 document.head.appendChild(lockStyle);
@@ -304,8 +303,6 @@
             main, #page-content-container { background: transparent !important; }
             a, button, [role="button"], .nav-control { cursor: pointer !important; }
             
-            .provider-game-wrapper { opacity: 0 !important; pointer-events: none !important; display: block !important;}
-            
             html.dm-hide-scrollbar, body.dm-hide-scrollbar, .dm-hide-scrollbar {
                 overflow: hidden !important;
                 scrollbar-width: none !important;
@@ -341,7 +338,7 @@
                     const html = target.outerHTML.toLowerCase();
                     const text = target.textContent.toLowerCase();
 
-                    // ✅ Фуллскрин
+                    // Фуллскрин
                     const svgUse = target.querySelector('use');
                     const hasFullscreenIcon = svgUse && svgUse.getAttribute('xlink:href') && svgUse.getAttribute('xlink:href').includes('fullscreen');
                     
@@ -350,11 +347,13 @@
                         return;
                     }
 
+                    // Кнопка "Вернуться"
                     if (text.includes('вернуться') || text.includes('назад') || html.includes('вернуться')) {
                         window.top.location.href = TARGET_DOMAIN + "/games/providers/list/categories";
                         return;
                     }
                     
+                    // Остальные ссылки
                     let url = TARGET_DOMAIN;
                     const sidebar = document.querySelector('aside');
                     if (sidebar && sidebar.contains(target)) {
@@ -411,38 +410,14 @@
             shield.style.cssText = "position:absolute; top:0; left:0; width:100%; height:100%; z-index:10000; background:transparent;";
             slotContainer.appendChild(shield);
 
-            shield.addEventListener('click', function() {
-                shield.style.display = 'none'; 
-            });
-
-            slotContainer.addEventListener('mouseleave', function() {
-                if (!isCinemaMode) {
-                    shield.style.display = 'block';
-                }
-            });
-
-            // 🚀 ИДЕАЛЬНОЕ СЛЕЖЕНИЕ ЗА ДИЗАЙНОМ
-            const trackGhost = () => {
-                if (!isCinemaMode) {
-                    try {
-                        const dFrame = document.getElementById("dm-design-frame");
-                        if (dFrame && dFrame.contentWindow) {
-                            const doc = dFrame.contentDocument;
-                            const ghost = doc.querySelector('.provider-game-wrapper'); 
-                            
-                            if (ghost) {
-                                const rect = ghost.getBoundingClientRect();
-                                slotContainer.style.setProperty("width", rect.width + "px", "important");
-                                slotContainer.style.setProperty("height", rect.height + "px", "important");
-                                slotContainer.style.setProperty("top", rect.top + "px", "important");
-                                slotContainer.style.setProperty("left", rect.left + "px", "important");
-                                slotContainer.style.setProperty("transform", "none", "important"); 
-                            }
-                        }
-                    } catch(e) {}
-                }
-                
-                requestAnimationFrame(trackGhost); 
+            const updateScroll = () => {
+                if (isCinemaMode) return;
+                try {
+                    const dFrame = document.getElementById("dm-design-frame");
+                    const scroller = dFrame.contentDocument.querySelector('#page-content-container'); 
+                    const scrollY = scroller ? scroller.scrollTop : 0;
+                    slotContainer.style.setProperty("transform", `translateY(-${scrollY}px)`, "important");
+                } catch(e) {}
             };
 
             shield.addEventListener('wheel', function(e) {
@@ -454,19 +429,50 @@
                         const scroller = dFrame.contentDocument.querySelector('#page-content-container');
                         if (scroller) {
                             scroller.scrollTop += e.deltaY;
+                            updateScroll(); 
                         }
                     } catch(err) {}
                 }
             });
 
+            shield.addEventListener('click', function() {
+                shield.style.display = 'none'; 
+            });
+
+            slotContainer.addEventListener('mouseleave', function() {
+                if (!isCinemaMode) {
+                    shield.style.display = 'block';
+                }
+            });
+
             const dFrame = document.getElementById("dm-design-frame");
             dFrame.onload = function() {
-                syncVh(); 
-                requestAnimationFrame(trackGhost); 
+                const scroller = dFrame.contentDocument.querySelector('#page-content-container');
+                if (scroller) {
+                    scroller.addEventListener('scroll', updateScroll, { passive: true });
+                }
                 setTimeout(hidePreloader, 300);
             };
             
-            window.addEventListener('resize', syncVh);
+            function updateScale() {
+                if (isCinemaMode) return; 
+                
+                const winWidth = window.innerWidth;
+                const scale = winWidth / BASE_SCREEN_WIDTH; 
+                
+                const currentWidth = BASE_SLOT_WIDTH * scale;
+                const currentHeight = BASE_SLOT_HEIGHT * scale;
+                const currentTop = BASE_SLOT_TOP * scale;
+                const currentLeft = BASE_SLOT_LEFT * scale;
+                
+                slotContainer.style.setProperty("width", currentWidth + "px", "important");
+                slotContainer.style.setProperty("height", currentHeight + "px", "important");
+                slotContainer.style.setProperty("top", currentTop + "px", "important");
+                slotContainer.style.setProperty("left", currentLeft + "px", "important");
+            }
+
+            updateScale();
+            window.addEventListener('resize', updateScale);
         }
 
         window.addEventListener("message", function(event) {
@@ -488,6 +494,7 @@
 
             if (document.fullscreenElement) {
                 isCinemaMode = true;
+                
                 document.documentElement.classList.add("dm-is-fullscreen");
                 
                 try { 
@@ -507,6 +514,7 @@
 
             } else {
                 isCinemaMode = false;
+                
                 document.documentElement.classList.remove("dm-is-fullscreen");
                 
                 try { 
@@ -516,13 +524,27 @@
                 } catch(e){}
 
                 design.style.filter = "none";
+
+                const winWidth = window.innerWidth;
+                const scale = winWidth / BASE_SCREEN_WIDTH;
+                slot.style.setProperty("top", (BASE_SLOT_TOP * scale) + "px", "important");
+                slot.style.setProperty("left", (BASE_SLOT_LEFT * scale) + "px", "important");
+                slot.style.setProperty("width", (BASE_SLOT_WIDTH * scale) + "px", "important");
+                slot.style.setProperty("height", (BASE_SLOT_HEIGHT * scale) + "px", "important");
+
+                try {
+                    const scroller = design.contentDocument.querySelector('#page-content-container'); 
+                    const scrollY = scroller ? scroller.scrollTop : 0;
+                    slot.style.setProperty("transform", `translateY(-${scrollY}px)`, "important");
+                } catch(e){}
+
                 if (shield) shield.style.display = "block"; 
             }
         });
     }
 
     function loadDesign(gameId) {
-        // ИСПОЛЬЗУЕМ НАТИВНЫЙ FETCH! (Это то, что ты просил для сервера)
+        // Заменили GM_xmlhttpRequest на нативный fetch
         fetch(GITHUB_BASE + gameId + ".html")
             .then(res => {
                 if (!res.ok) throw new Error("File not found");
@@ -555,7 +577,6 @@
         loadDesign(gameId);
     }
 
-    enforceFakeTab(); 
     init();
     document.addEventListener("DOMContentLoaded", init);
     new MutationObserver(init).observe(document.documentElement, { childList: true, subtree: true });
